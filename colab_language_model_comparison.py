@@ -15,22 +15,23 @@ import numpy as np
 from tqdm import tqdm
 import re
 
-# BPEasy 사용을 위한 설정
+# BPEasy 사용을 위한 설정 (로컬 bpeasy 사용)
 try:
-    import bpeasy
-    from bpeasy import BPEasyTokenizer
-    print("✅ BPEasy 사용 가능")
-except ImportError:
-    print("❌ BPEasy를 찾을 수 없습니다. 설치를 시도합니다...")
-    try:
-        import subprocess
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "bpeasy"])
-        import bpeasy
-        from bpeasy import BPEasyTokenizer
-        print("✅ BPEasy 설치 완료")
-    except:
-        print("❌ BPEasy 설치 실패. 대안 토크나이저를 사용합니다.")
+    # 로컬 bpeasy 폴더를 Python 경로에 추가
+    import sys
+    import os
+    bpeasy_path = os.path.join(os.getcwd(), 'bpeasy')
+    if os.path.exists(bpeasy_path):
+        sys.path.insert(0, bpeasy_path)
+        from bpeasy.tokenizer import BPEasyTokenizer
+        print("✅ 로컬 BPEasy 사용 가능")
+    else:
+        print("❌ 로컬 bpeasy 폴더를 찾을 수 없습니다.")
         BPEasyTokenizer = None
+except ImportError as e:
+    print(f"❌ BPEasy import 실패: {e}")
+    print("대안 토크나이저를 사용합니다.")
+    BPEasyTokenizer = None
 
 # 하이퍼파라미터 (원본 모델 기반)
 BATCH_SIZE = 64
@@ -65,22 +66,42 @@ class BPETokenizer:
         
         if BPEasyTokenizer is not None:
             try:
-                # BPEasy 사용
-                self.tokenizer = BPEasyTokenizer()
-                self.tokenizer.train(text, vocab_size=self.vocab_size)
-                print(f"✅ BPEasy 토크나이저 훈련 완료 (어휘 크기: {self.vocab_size})")
+                # BPEasy 사용 - 실제 BPE 훈련
+                print("실제 BPE 토크나이저 훈련 중...")
+                
+                # 텍스트를 이터레이터로 변환 (BPEasy 요구사항)
+                text_lines = text.split('\n')
+                text_iterator = iter(text_lines)
+                
+                # BPEasy 토크나이저 훈련
+                self.tokenizer = BPEasyTokenizer.train(
+                    iterator=text_iterator,
+                    vocab_size=self.vocab_size,
+                    max_token_length=128,
+                    regex_pattern=r"""[^\r\n\p{L}\p{N}]?\p{L}+|\p{N}{1,3}| ?[^\s\p{L}\p{N}]+[\r\n]*|\s*[\r\n]+|\s+(?!\S)|\s+""",
+                    special_tokens=self.special_tokens,
+                    name="bpeasy_assignment"
+                )
+                
+                print(f"✅ 실제 BPE 토크나이저 훈련 완료!")
+                print(f"   어휘 크기: {len(self.tokenizer)}")
+                print(f"   특수 토큰: {self.special_tokens}")
                 
                 # 토크나이저 저장
+                self.tokenizer.save(save_path.replace('.json', '_bpeasy.json'))
+                
+                # 메타데이터 저장
                 tokenizer_data = {
-                    "vocab_size": self.vocab_size,
+                    "vocab_size": len(self.tokenizer),
                     "special_tokens": self.special_tokens,
-                    "bpe_model": "bpeasy"
+                    "bpe_model": "bpeasy",
+                    "actual_vocab_size": len(self.tokenizer)
                 }
                 
                 with open(save_path, 'w', encoding='utf-8') as f:
                     json.dump(tokenizer_data, f, ensure_ascii=False, indent=2)
                 
-                return self.vocab_size
+                return len(self.tokenizer)
                 
             except Exception as e:
                 print(f"BPEasy 훈련 실패: {e}")
@@ -147,10 +168,15 @@ class BPETokenizer:
             
             if tokenizer_data.get("bpe_model") == "bpeasy" and BPEasyTokenizer is not None:
                 # BPEasy 토크나이저 로드
-                self.tokenizer = BPEasyTokenizer()
-                # 실제 구현에서는 저장된 모델을 로드해야 함
-                print(f"BPEasy 토크나이저가 {path}에서 로드되었습니다.")
-                return self.vocab_size
+                bpeasy_path = path.replace('.json', '_bpeasy.json')
+                if os.path.exists(bpeasy_path):
+                    self.tokenizer = BPEasyTokenizer.from_file(bpeasy_path)
+                    print(f"✅ 실제 BPEasy 토크나이저가 로드되었습니다.")
+                    print(f"   어휘 크기: {len(self.tokenizer)}")
+                    return len(self.tokenizer)
+                else:
+                    print(f"BPEasy 모델 파일 {bpeasy_path}를 찾을 수 없습니다.")
+                    return None
             else:
                 # 대안 토크나이저 로드
                 self.word_to_idx = tokenizer_data["word_to_idx"]
@@ -522,10 +548,17 @@ def main():
     print("=" * 60)
     print(f"✅ RNN (LSTM) 모델")
     print(f"✅ Transformer 모델") 
-    print(f"✅ BPE 토크나이저 (어휘 크기: {VOCAB_SIZE})")
+    print(f"✅ 실제 BPE 토크나이저 (어휘 크기: {VOCAB_SIZE})")
     print(f"✅ 동일한 데이터셋 사용")
     print(f"✅ 수렴까지 훈련")
     print(f"✅ 성능 비교 및 분석")
+    print("=" * 60)
+    
+    # BPEasy 사용 가능 여부 확인
+    if BPEasyTokenizer is not None:
+        print("🎯 실제 BPEasy 토크나이저를 사용합니다!")
+    else:
+        print("⚠️  대안 토크나이저를 사용합니다 (BPEasy 사용 불가)")
     print("=" * 60)
     
     # 데이터 로드
