@@ -453,26 +453,18 @@ def main():
     print("언어 모델 비교 실험 시작")
     print("=" * 50)
     
-    # 샘플 데이터 생성 (Colab에서 테스트용)
-    print("샘플 데이터 생성 중...")
-    sample_text = """
-    To be or not to be, that is the question:
-    Whether 'tis nobler in the mind to suffer
-    The slings and arrows of outrageous fortune,
-    Or to take arms against a sea of troubles,
-    And by opposing end them. To die—to sleep,
-    No more; and by a sleep to say we end
-    The heart-ache and the thousand natural shocks
-    That flesh is heir to: 'tis a consummation
-    Devoutly to be wish'd. To die, to sleep;
-    To sleep, perchance to dream—ay, there's the rub:
-    For in that sleep of death what dreams may come,
-    When we have shuffled off this mortal coil,
-    Must give us pause—there's the respect
-    That makes calamity of so long life.
-    """ * 100  # 반복하여 더 큰 데이터셋 생성
+    # 데이터 로드 (실제 input.txt 파일 사용)
+    data_path = 'Char_Transformer_Language_Model/input.txt'
+    if not os.path.exists(data_path):
+        print(f"❌ {data_path} 파일을 찾을 수 없습니다!")
+        print("GitHub에서 리포지토리를 클론했는지 확인해주세요.")
+        return
     
-    print(f"데이터 크기: {len(sample_text):,} 문자")
+    print(f"📁 데이터 로드 중: {data_path}")
+    with open(data_path, 'r', encoding='utf-8') as f:
+        text = f.read()
+    
+    print(f"✅ 데이터 크기: {len(text):,} 문자")
     
     # 토크나이저 설정
     tokenizer = SimpleTokenizer(VOCAB_SIZE)

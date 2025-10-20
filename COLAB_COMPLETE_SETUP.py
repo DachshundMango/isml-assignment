@@ -32,7 +32,47 @@ os.chdir('/content/isml-assignment')
 print(f"현재 작업 디렉토리: {os.getcwd()}")
 ```
 
-## 3. 샘플 데이터 생성
+## 3. GitHub에서 리포지토리 클론
+
+```python
+# GitHub에서 리포지토리 클론
+!git clone https://github.com/DachshundMango/isml-assignment.git
+
+# 작업 디렉토리 변경
+import os
+os.chdir('/content/isml-assignment')
+
+# 프로젝트 구조 확인
+print("=== 프로젝트 구조 ===")
+!ls -la
+print("\n=== Char_Transformer_Language_Model 폴더 ===")
+!ls -la Char_Transformer_Language_Model/
+print("\n=== 데이터 파일 확인 ===")
+!ls -la Char_Transformer_Language_Model/input.txt
+```
+
+## 4. 데이터 확인
+
+```python
+# 실제 데이터 로드 확인
+with open('Char_Transformer_Language_Model/input.txt', 'r', encoding='utf-8') as f:
+    text = f.read()
+
+print(f"데이터 크기: {len(text):,} 문자")
+print(f"첫 500자 미리보기:")
+print(text[:500])
+```
+
+## 5. 기존 코드 실행
+
+```python
+# 기존 코드 실행 (실제 input.txt 사용)
+exec(open('language_model_comparison.py').read())
+```
+
+## 대안: 샘플 데이터 생성 (필요시)
+
+만약 GitHub 클론이 안 되거나 문제가 있다면:
 
 ```python
 # Shakespeare 텍스트 샘플 생성
