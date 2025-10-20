@@ -1,0 +1,39 @@
+[build-system]
+requires = ["maturin>=1.3,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "bpeasy"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+]
+dynamic = ["version"]
+description = "Fast bare-bones BPE for modern tokenizer training"
+authors = [{name = "Gautier Dagan", email = "<gautier.dagan@ed.ac.uk>"}]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/gautierdag/bpeasy"
+repository = "https://github.com/gautierdag/bpeasy"
+include = [
+    "LICENSE",
+]
+keywords = ["tokenizer", "tokenization", "bpe"]
+dependencies = [
+    "tiktoken>=0.4.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov", "black", "tokenizers", "tqdm"]
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
